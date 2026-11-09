@@ -1,0 +1,101 @@
+{
+  "name": "summarize minutes of the meeting",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-notes",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "d04e2ef0-acde-47ad-8aad-5f96a4c73f86",
+      "name": "Receive Meeting Notes",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "webhookId": "6f7f546f-5de8-4798-bf19-fbeaa9c80dd9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst summary = String(body.summary ?? 'No summary was provided.');\nconst transcript = String(body.transcript ?? 'No transcript available.');\nconst timestamp = String(body.timestamp ?? '');\n\nconst slackSummary = summary\n  .replace(/^#{1,6}\\s+(.+)$/gm, '*$1*')\n  .replace(/\\*\\*(.+?)\\*\\*/g, '*$1*');\n\nconst processedLine = timestamp ? `\\n_Processed: ${timestamp}_` : '';\n\nreturn [{\n  json: {\n    summary,\n    transcript,\n    timestamp,\n    slackMessage: `*Meeting Notes*${processedLine}\\n\\n*Summary:*\\n${slackSummary}\\n\\n*Transcript:*\\n_${transcript}_`,\n  },\n}];"
+      },
+      "id": "85f043cd-d596-4557-886e-0db008399793",
+      "name": "Format for Slack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "meeting-minutes",
+          "mode": "name"
+        },
+        "text": "={{ $json.slackMessage }}",
+        "otherOptions": {}
+      },
+      "id": "6e1feee4-054d-4436-a949-907f57a960f7",
+      "name": "Post Meeting Notes to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        304
+      ],
+      "webhookId": "56000b0e-4bb8-4cd3-8585-dbd2481ee4ce",
+      "credentials": {
+        "slackApi": {
+          "id": "6mgy1RY0dXcxzchV",
+          "name": "Slack account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Receive Meeting Notes": {
+      "main": [
+        [
+          {
+            "node": "Format for Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Slack": {
+      "main": [
+        [
+          {
+            "node": "Post Meeting Notes to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "84cf017e-87dc-45bb-b17a-9fbbf22fb120",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "65add785ec038e5c3681ede24af5248f4456e26dd6723eb145ccbe375a24ae2e"
+  },
+  "nodeGroups": [],
+  "id": "sLnPawycxZKqxzUz",
+  "tags": []
+}
